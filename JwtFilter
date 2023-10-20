@@ -1,0 +1,24 @@
+public class JwtFilter extends OncePerRequestFilter {
+
+    private JwtTokenUtil jwtTokenUtil;
+
+    public JwtFilter(JwtTokenUtil jwtTokenUtil) {
+        this.jwtTokenUtil = jwtTokenUtil;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        if (token != null && jwtTokenUtil.validateToken(token)) {
+            UserDetails userDetails = jwtTokenUtil.getUsernameFromToken(token);
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+}
