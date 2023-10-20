@@ -1,0 +1,34 @@
+public class JwtTokenUtil {
+
+    private JwtConfig jwtConfig;
+
+    public JwtTokenUtil(JwtConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+    }
+
+    public String generateToken(UserDetails userDetails) {
+        Claims claims = Jwts.claims().setSubject(userDetails.getUsername());
+        claims.setIssuedAt(new Date());
+        claims.setExpiration(new Date(System.currentTimeMillis() + jwtConfig.getExpiration() * 1000));
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .signWith(SignatureAlgorithm.HS512, jwtConfig.getSecret())
+                .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(jwtConfig.getSecret()).parseClaimsJws(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parser().setSigningKey(jwtConfig.getSecret()).parseClaimsJws(token).getBody();
+        return claims.getSubject();
+    }
+
+}
